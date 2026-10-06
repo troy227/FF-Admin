@@ -1,0 +1,14 @@
+{
+  "name": "base-project-init",
+  "private": true,
+  "description": "Interview base: NestJS + Postgres + Vue + json-server",
+  "scripts": {
+    "install:all": "npm install --prefix backend && npm install --prefix frontend",
+    "db:migrate": "npm run db:migrate --prefix backend",
+    "db:migrate:status": "npm run db:migrate:status --prefix backend",
+    "backend:dev": "npm run start:dev --prefix backend",
+    "frontend:dev": "npm run dev --prefix frontend",
+    "mock:dev": "npm run mock --prefix frontend",
+    "setup": "npm run install:all && npm run db:migrate"
+  }
+}
