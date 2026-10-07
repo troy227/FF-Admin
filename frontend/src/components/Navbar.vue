@@ -21,7 +21,7 @@ onMounted(() => {
       to="/tab-2"
       class="tab"
       active-class="active"
-      :class="{ disabled: !isFlagEnabled('tab-2') }"
+       :class="{ disabled: !isFlagEnabled('tab-2') }"
     >
       Tab 2
     </RouterLink>
@@ -42,6 +42,9 @@ onMounted(() => {
       Tab 4
     </RouterLink>
     <RouterLink to="/flags" class="tab" active-class="active">FF Control</RouterLink>
+    <RouterLink to="/create-flag" class="tab" active-class="active">
+      Create FF
+    </RouterLink>
   </nav>
 </template>
 

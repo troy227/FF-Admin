@@ -31,3 +31,15 @@ export class UpdateFlagDto {
     @IsNotEmpty()
     key?: string;
 }
+
+export class FlagResponseDto {
+    id!: number;
+    key!: string;
+    userIds!: number[] | null;
+    enabled!: boolean;
+}
+
+export class FlagListResponseDto {
+    items!: FlagResponseDto[];
+    nextCursor!: number | null;
+}

@@ -29,6 +29,10 @@ const router = createRouter({
       component: () => import('../views/FFAdminView.vue'),
     },
     {
+      path: '/create-flag',
+      component: () => import('../views/CreateFlagView.vue'),
+    },
+    {
       path: '/disabled',
       name: 'tab-disabled',
       component: () => import('../views/TabDisabled.vue'),
