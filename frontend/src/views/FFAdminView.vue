@@ -1,10 +1,21 @@
 <script setup>
-import { onMounted, ref, reactive } from 'vue';
+import { computed, onMounted, ref, reactive } from 'vue';
 import api from '../services/api.js';
 
 const flags = ref([]);
+const draftEnabled = reactive({});
 const loading = ref(true);
 const error = ref('');
+
+function syncDraftEnabled(data) {
+  for (const flag of data) {
+    draftEnabled[flag.id] = flag.enabled;
+  }
+}
+
+const hasUnsavedChanges = computed(() =>
+  flags.value.some((flag) => draftEnabled[flag.id] !== flag.enabled),
+);
 
 function formatUserIds(userIds) {
   if (userIds == null || userIds.length === 0) {
@@ -19,6 +30,7 @@ async function loadFlags() {
   try {
     const { data } = await api.get('/ff');
     flags.value = data;
+    syncDraftEnabled(data);
   } catch {
     error.value = 'Failed to load feature flags.';
   } finally {
@@ -26,18 +38,25 @@ async function loadFlags() {
   }
 }
 
-async function onToggle(flag, event) {
-  const enabled = event.target.checked;
-  const previous = flag.enabled;
-
-  flag.enabled = enabled;
+async function saveAllFlags() {
+  const changed = flags.value.filter(
+    (flag) => draftEnabled[flag.id] !== flag.enabled,
+  );
+  if (changed.length === 0) {
+    return;
+  }
 
   try {
-    const { data } = await api.patch(`/ff/${flag.id}`, { enabled });
-    flag.enabled = data.enabled;
+    await Promise.all(
+      changed.map(async (flag) => {
+        const enabled = draftEnabled[flag.id];
+        const { data } = await api.patch(`/ff/${flag.id}`, { enabled });
+        flag.enabled = data.enabled;
+        draftEnabled[flag.id] = data.enabled;
+      }),
+    );
   } catch {
-    flag.enabled = previous;
-    event.target.checked = previous;
+    error.value = 'Failed to update feature flags.';
   }
 }
 const newFlag = reactive({
@@ -50,6 +69,7 @@ async function handleCreateFlag() {
   try {
     const { data } = await api.post('/ff', newFlag);
     flags.value.push(data);
+    draftEnabled[data.id] = data.enabled;
   } catch {
     error.value = 'Failed to create feature flag.';
   }
@@ -82,17 +102,23 @@ onMounted(loadFlags);
           <td>{{ formatUserIds(flag.userIds) }}</td>
           <td>
             <label class="toggle">
-              <input
-                type="checkbox"
-                :checked="flag.enabled"
-                @change="onToggle(flag, $event)"
-              />
-              <span>{{ flag.enabled ? 'On' : 'Off' }}</span>
+              <input v-model="draftEnabled[flag.id]" type="checkbox" />
+              <span>{{ draftEnabled[flag.id] ? 'On' : 'Off' }}</span>
             </label>
           </td>
         </tr>
       </tbody>
     </table>
+    <form @submit="saveAllFlags">
+        <button
+      v-if="!loading && !error"
+      type="submit"
+      class="save-button"
+      :disabled="!hasUnsavedChanges"
+    >
+      Save
+    </button>
+    </form>
     <h1>Create a Flag</h1>
     <form class="create-form" @submit="handleCreateFlag">
       <div>
@@ -144,6 +170,10 @@ h1 {
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
+}
+
+.save-button {
+  margin-top: 0.75rem;
 }
 
 .create-form div {
